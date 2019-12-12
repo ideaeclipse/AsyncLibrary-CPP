@@ -13,8 +13,8 @@
  * @param cptr callback function to call on fptr completion
  */
 template<typename R>
-void AsyncLibrarySupplier<R>::execute_task_separate_thread(const std::function<R()> &fptr,
-                                                           const std::function<void(R)> &cptr) {
+void AsyncLibrarySupplier<R>::execute_task_separate_thread(const std::function<R()> fptr,
+                                                           const std::function<void(R)> cptr) {
     std::future<R> future = std::async(fptr);
     future.wait();
 
@@ -42,31 +42,12 @@ long AsyncLibrarySupplier<R>::l_rand() {
  */
 template<typename R>
 void AsyncLibrarySupplier<R>::delete_function(const long id) {
-    this->map_of_functions->erase(id);
     this->map_of_results->erase(id);
 }
 
 /**
- * Creates a task based on a function passed.
- *
- * @param fptr function pointer
- * @return the task id that was generated for this task
- */
-template<typename R>
-long AsyncLibrarySupplier<R>::add_task(const std::function<R()> &fptr) {
-
-    long random_long;
-
-    while (this->map_of_functions->count((random_long = l_rand())) != 0);
-
-    this->map_of_functions->insert(std::make_pair(random_long, std::move(fptr)));
-
-    return random_long;
-}
-
-/**
  * Auto executes a task, with this function nothing gets stored and your callback function gets auto executed on completion of the function you passed.
- * This function should only be used if your tasks have nothing to do with order, if you need to have path control use add_task and the execute_tasks
+ * This function should only be used if your tasks have nothing to do with order, if you need to have path control execute_tasks
  * functions to control the execution flow and return response of your async tasks.
  *
  * @param fptr function you wish to execute on a separate thread
@@ -74,9 +55,9 @@ long AsyncLibrarySupplier<R>::add_task(const std::function<R()> &fptr) {
  */
 template<typename R>
 void
-AsyncLibrarySupplier<R>::add_task_with_auto_execute_callback(const std::function<R()> &fptr,
-                                                             const std::function<void(R)> &cptr) {
-    std::thread{this->execute_task_separate_thread, this, std::move(fptr), std::move(cptr)}.detach();
+AsyncLibrarySupplier<R>::add_task_with_auto_execute_callback(const std::function<R()> fptr,
+                                                             const std::function<void(R)> cptr) {
+    std::thread{this->execute_task_separate_thread, this, fptr, cptr}.detach();
     this->number_of_detached_threads += 1;
 }
 
@@ -86,22 +67,15 @@ AsyncLibrarySupplier<R>::add_task_with_auto_execute_callback(const std::function
  * @param id task id
  */
 template<typename R>
-void AsyncLibrarySupplier<R>::execute_single_task(const long id) {
-    if (this->map_of_functions->count(id) == 1) {
-        this->map_of_results->insert(std::make_pair(id, std::move(std::async(this->map_of_functions->at(id)))));
-    } else {
-        throw "The id you passed is not a valid task";
-    }
-}
+long AsyncLibrarySupplier<R>::execute_single_task(const std::function<R()> fptr) {
 
-/**
- * Executes all tasks in the map
- */
-template<typename R>
-void AsyncLibrarySupplier<R>::execute_all_tasks() {
-    for (std::pair<long, std::function<R()>> pair : *this->map_of_functions) {
-        this->map_of_results->insert(std::make_pair(pair.first, std::move(std::async(pair.second))));
-    }
+    long random_id;
+
+    while (this->map_of_results->count((random_id = l_rand())) != 0);
+
+    this->map_of_results->insert(std::make_pair(random_id, std::async(fptr)));
+
+    return random_id;
 }
 
 /**
@@ -114,7 +88,9 @@ template<typename R>
 R AsyncLibrarySupplier<R>::get_result_from_task(const long id) {
     if (this->map_of_results->count(id) == 1) {
 
-        std::future<R> future = std::move(this->map_of_results->at(id));
+        std::shared_future<R> future = std::move(this->map_of_results->at(id));
+
+        future.wait();
 
         R result = future.get();
 
@@ -133,10 +109,12 @@ R AsyncLibrarySupplier<R>::get_result_from_task(const long id) {
  * @param cptr callback function
  */
 template<typename R>
-void AsyncLibrarySupplier<R>::get_result_from_task_with_callback(const long id, const std::function<void(R)> &cptr) {
+void AsyncLibrarySupplier<R>::get_result_from_task_with_callback(const long id, const std::function<void(R)> cptr) {
     if (this->map_of_results->count(id) == 1) {
 
-        std::future<R> future = std::move(this->map_of_results->at(id));
+        std::shared_future<R> future = std::move(this->map_of_results->at(id));
+
+        future.wait();
 
         R result = future.get();
 
@@ -154,7 +132,7 @@ void AsyncLibrarySupplier<R>::get_result_from_task_with_callback(const long id, 
  * Waits for the detached threads to be completed.
  * This gets called on the de-constructor but if you execute a set of tasks and you need to wait for them to complete
  * you can use this function to wait for them to complete. If you need to have control of their flow you should
- * see the add_task functions and the execute_task functions.
+ * see the execute_task functions.
  */
 template<typename R>
 void AsyncLibrarySupplier<R>::wait() {
@@ -168,19 +146,13 @@ void AsyncLibrarySupplier<R>::wait() {
 template<typename R>
 void AsyncLibrarySupplier<R>::shutdown_now() {
     auto *list_of_ids = new std::list<long>();
-    for (std::pair<long, std::function<R()>> pair : *this->map_of_functions) {
 
-        long id = pair.first;
+    for (auto x : *this->map_of_results) {
+        list_of_ids->push_back(x.first);
 
-        list_of_ids->push_back(id);
-
-        if (this->map_of_results->count(id) == 1) {
-            std::future<R> future = std::move(this->map_of_results->at(id));
-
-            if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
-                future.get();
-        }
-
+        std::shared_future<R> shared_future = x.second;
+        shared_future.wait();
+        shared_future.get();
     }
 
     for (auto x: *list_of_ids)
@@ -196,6 +168,5 @@ template<typename R>
 AsyncLibrarySupplier<R>::~AsyncLibrarySupplier() {
     this->wait();
     this->shutdown_now();
-    delete this->map_of_functions;
     delete this->map_of_results;
 }

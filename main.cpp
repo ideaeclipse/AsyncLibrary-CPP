@@ -43,7 +43,6 @@ int main() {
     asyncLibrary->add_task_with_auto_execute_callback(task2, function);
     asyncLibrary->add_task_with_auto_execute_callback(task3, function);
 
-
     std::cout << "Executing un-ordered tasks" << std::endl;
 
     asyncLibrary->wait();
@@ -52,43 +51,19 @@ int main() {
 
     auto *list_of_ids = new std::list<long>();
 
-    list_of_ids->push_back(asyncLibrary->add_task(task1));
-    list_of_ids->push_back(asyncLibrary->add_task(task2));
-    list_of_ids->push_back(asyncLibrary->add_task(task3));
+    list_of_ids->push_back(asyncLibrary->execute_single_task(task1));
+    list_of_ids->push_back(asyncLibrary->execute_single_task(task2));
+    list_of_ids->push_back(asyncLibrary->execute_single_task(task3));
 
-    // Load each task
-    for (auto x: *list_of_ids)
+    std::cout << "Pushed all tasks" << std::endl;
+
+    for (auto x: *list_of_ids) {
         try {
-            asyncLibrary->execute_single_task(x);
+            asyncLibrary->get_result_from_task_with_callback(x, function);
         } catch (const char *msg) {
             std::cout << msg << std::endl;
         }
-
-    // See the result of a task that doesn't exist
-    try {
-        asyncLibrary->execute_single_task(0);
-    } catch (const char *msg) {
-        std::cout << msg << std::endl;
     }
-
-    // Get result from each task loaded in
-    for (auto x : *list_of_ids)
-        try {
-            asyncLibrary->get_result_from_task_with_callback(x, [](std::string string) {
-                std::cout << string << std::endl;
-            });
-        } catch (const char *msg) {
-            std::cout << msg << std::endl;
-        }
-
-
-    // Gets the result from an unknown task
-    try {
-        std::cout << asyncLibrary->get_result_from_task(0) << std::endl;
-    } catch (const char *msg) {
-        std::cout << msg << std::endl;
-    }
-
 
     // garbage collection
     delete list_of_ids;
