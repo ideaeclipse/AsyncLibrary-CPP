@@ -33,6 +33,33 @@ std::string task3() {
     return "task3";
 }
 
+/**
+ * Example task 1 U
+ * @return sum
+ */
+int task1U(int a, int b) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    return a + b;
+}
+
+/**
+ * Example task 2 U
+ * @return minus
+ */
+int task2U(int a, int b) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    return a - b;
+}
+
+/**
+ * Example task 3 U
+ * @return product
+ */
+int task3U(int a, int b) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    return a * b;
+}
+
 
 int main() {
 
@@ -42,11 +69,15 @@ int main() {
         std::cout << string << std::endl;
     };
 
-    auto *asyncLibraryUnSynced = new AsyncLibraryUnSynced<std::string>();
+    auto function2 = [](int sum) {
+        std::cout << sum << std::endl;
+    };
 
-    asyncLibraryUnSynced->add_task_with_auto_execute_callback(task1, function);
-    asyncLibraryUnSynced->add_task_with_auto_execute_callback(task2, function);
-    asyncLibraryUnSynced->add_task_with_auto_execute_callback(task3, function);
+    auto *asyncLibraryUnSynced = new AsyncLibraryUnSynced<int, int, int>();
+
+    asyncLibraryUnSynced->add_task_with_auto_execute_callback(task1U, 5, 6, function2);
+    asyncLibraryUnSynced->add_task_with_auto_execute_callback(task2U, 4, 3, function2);
+    asyncLibraryUnSynced->add_task_with_auto_execute_callback(task3U, 7, 8, function2);
 
     std::cout << "Executing un-ordered tasks" << std::endl;
 
