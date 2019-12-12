@@ -3,7 +3,8 @@
 #include <list>
 #include <future>
 #include <fstream>
-#include "AsyncLibrarySupplier.cpp"
+#include "AsyncLibrarySynced.cpp"
+#include "AsyncLibraryUnSynced.cpp"
 
 /**
  * Example task 1
@@ -32,34 +33,38 @@ std::string task3() {
     return "task3";
 }
 
+
 int main() {
-    auto *asyncLibrary = new AsyncLibrarySupplier<std::string>();
+
+    auto *asyncLibrarySynced = new AsyncLibrarySynced<std::string>();
 
     auto function = [](std::string string) {
         std::cout << string << std::endl;
     };
 
-    asyncLibrary->add_task_with_auto_execute_callback(task1, function);
-    asyncLibrary->add_task_with_auto_execute_callback(task2, function);
-    asyncLibrary->add_task_with_auto_execute_callback(task3, function);
+    auto *asyncLibraryUnSynced = new AsyncLibraryUnSynced<std::string>();
+
+    asyncLibraryUnSynced->add_task_with_auto_execute_callback(task1, function);
+    asyncLibraryUnSynced->add_task_with_auto_execute_callback(task2, function);
+    asyncLibraryUnSynced->add_task_with_auto_execute_callback(task3, function);
 
     std::cout << "Executing un-ordered tasks" << std::endl;
 
-    asyncLibrary->wait();
+    asyncLibraryUnSynced->wait();
 
     std::cout << "Executing controlled output. in order of 1 2 3" << std::endl;
 
     auto *list_of_ids = new std::list<long>();
 
-    list_of_ids->push_back(asyncLibrary->execute_single_task(task1));
-    list_of_ids->push_back(asyncLibrary->execute_single_task(task2));
-    list_of_ids->push_back(asyncLibrary->execute_single_task(task3));
+    list_of_ids->push_back(asyncLibrarySynced->execute_single_task(task1));
+    list_of_ids->push_back(asyncLibrarySynced->execute_single_task(task2));
+    list_of_ids->push_back(asyncLibrarySynced->execute_single_task(task3));
 
     std::cout << "Pushed all tasks" << std::endl;
 
     for (auto x: *list_of_ids) {
         try {
-            asyncLibrary->get_result_from_task_with_callback(x, function);
+            asyncLibrarySynced->get_result_from_task_with_callback(x, function);
         } catch (const char *msg) {
             std::cout << msg << std::endl;
         }
@@ -68,7 +73,9 @@ int main() {
     // garbage collection
     delete list_of_ids;
 
-    delete asyncLibrary;
+    delete asyncLibraryUnSynced;
+
+    delete asyncLibrarySynced;
 
     printf("Program complete");
 
