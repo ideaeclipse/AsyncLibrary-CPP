@@ -94,6 +94,14 @@ public:
     R get_result_from_task(const long id);
 
     /**
+     * Executes a task by an id and passes it to a designated callback function as parameter number two
+     *
+     * @param id task id
+     * @param callback callback function
+     */
+    void get_result_from_task_with_callback(const long id, void(*callback)(R));
+
+    /**
      * De-constructor. Frees the maps and calls shutdown_now
      */
     ~AsyncLibrarySupplier();

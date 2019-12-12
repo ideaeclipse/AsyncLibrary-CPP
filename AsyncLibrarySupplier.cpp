@@ -95,7 +95,7 @@ void AsyncLibrarySupplier<R>::shutdown_now() {
         this->delete_function(x);
 
     delete list_of_ids;
-    printf("Size = %d and %d\n", this->map_of_functions->size(), this->map_of_results->size());
+    printf("Size = %lu and %lu\n", this->map_of_functions->size(), this->map_of_results->size());
 }
 
 /**
@@ -115,6 +115,30 @@ R AsyncLibrarySupplier<R>::get_result_from_task(const long id) {
         this->delete_function(id);
 
         return result;
+    }
+
+    throw "Id does not exist";
+}
+
+/**
+ * Executes a task by an id and passes it to a designated callback function as parameter number two
+ *
+ * @param id task id
+ * @param callback callback function
+ */
+template<typename R>
+void AsyncLibrarySupplier<R>::get_result_from_task_with_callback(const long id, void (*callback)(R)) {
+    if (this->map_of_results->count(id) == 1) {
+
+        std::future<R> future = std::move(this->map_of_results->at(id));
+
+        R result = future.get();
+
+        this->delete_function(id);
+
+        callback(result);
+
+        return;
     }
 
     throw "Id does not exist";

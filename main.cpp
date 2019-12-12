@@ -55,10 +55,13 @@ int main() {
     // Get result from each task loaded in
     for (auto x : *list_of_ids)
         try {
-            std::cout << asyncLibrary->get_result_from_task(x) << std::endl;
+            asyncLibrary->get_result_from_task_with_callback(x, [](std::string string) {
+                std::cout << string << std::endl;
+            });
         } catch (const char *msg) {
             std::cout << msg << std::endl;
         }
+
 
     // Gets the result from an unknown task
     try {
