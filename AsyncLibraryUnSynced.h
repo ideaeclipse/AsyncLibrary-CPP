@@ -9,6 +9,8 @@
 
 #include <utility>
 #include <future>
+#include <mutex>
+#include <condition_variable>
 
 template<typename R, typename... P>
 class AsyncLibraryUnSynced {
@@ -28,6 +30,17 @@ private:
      * Number of detached threads. This is used to denote how many threads are being executed currently.
      */
     int number_of_detached_threads = 0;
+
+    /**
+     * Mutex for use in the wait function
+     */
+    std::mutex mutex;
+
+    /**
+     * Condition variable for use in the wait function
+     */
+    std::condition_variable condition_variable;
+
 
     /**
      * Used in tandum with add_task_with_auto_execute_callback. See that functions docs for more info

@@ -21,6 +21,13 @@ void AsyncLibraryUnSynced<R, P...>::execute_task_separate_thread(const Function 
     callback_thread.join();
 
     this->number_of_detached_threads -= 1;
+
+    if (this->number_of_detached_threads == 0) {
+        std::unique_lock<std::mutex> lock(this->mutex);
+        lock.unlock();
+        this->condition_variable.notify_one();
+    }
+
 }
 
 /**
@@ -48,8 +55,10 @@ AsyncLibraryUnSynced<R, P...>::add_task_with_auto_execute_callback(const Functio
  */
 template<typename R, typename... P>
 void AsyncLibraryUnSynced<R, P...>::wait() {
-    while (this->number_of_detached_threads > 0)
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    if (this->number_of_detached_threads > 0) {
+        std::unique_lock<std::mutex> lock(this->mutex);
+        this->condition_variable.wait(lock);
+    }
 }
 
 /**
