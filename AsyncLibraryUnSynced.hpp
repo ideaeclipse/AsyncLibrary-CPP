@@ -29,7 +29,7 @@ private:
     /**
      * Number of detached threads. This is used to denote how many threads are being executed currently.
      */
-    int number_of_detached_threads = 0;
+    std::atomic<int> number_of_detached_threads{0};
 
     /**
      * Mutex for use in the wait function
@@ -49,7 +49,21 @@ private:
      * @param params for fptr
      * @param cptr callback function to call on fptr completion
      */
-    void execute_task_separate_thread(const Function fptr, const P... params, const Callback cptr);
+    void execute_task_separate_thread(const Function fptr, const P... params, const Callback cptr){
+        std::future<R> future = std::async(fptr, params...);
+        future.wait();
+
+        std::thread callback_thread = std::thread(cptr, future.get());
+        callback_thread.join();
+
+        this->number_of_detached_threads -= 1;
+
+        if (this->number_of_detached_threads == 0) {
+            std::unique_lock<std::mutex> lock(this->mutex);
+            lock.unlock();
+            this->condition_variable.notify_one();
+        }
+    }
 
 public:
 
@@ -62,7 +76,10 @@ public:
      * @param params params for fptr
      * @param cptr function you wish to pass the result of fptr to on completion
      */
-    void add_task_with_auto_execute_callback(const Function fptr, const P... params, const Callback cptr);
+    void add_task_with_auto_execute_callback(const Function fptr, const P... params, const Callback cptr){
+        std::thread{&AsyncLibraryUnSynced<R, P...>::execute_task_separate_thread, this, fptr, params..., cptr}.detach();
+        this->number_of_detached_threads += 1;
+    }
 
     /**
      * Waits for the detached threads to be completed.
@@ -70,12 +87,19 @@ public:
      * you can use this function to wait for them to complete. If you need to have control of their flow you should
      * see the execute_task functions.
      */
-    void wait();
+    void wait(){
+        if (this->number_of_detached_threads > 0) {
+            std::unique_lock<std::mutex> lock(this->mutex);
+            this->condition_variable.wait(lock);
+        }
+    }
 
     /**
      * Calls wait to ensure all detached tasks are completed.
      */
-    ~AsyncLibraryUnSynced();
+    ~AsyncLibraryUnSynced(){
+        this->wait();
+    }
 };
 
 

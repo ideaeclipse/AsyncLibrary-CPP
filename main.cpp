@@ -3,8 +3,8 @@
 #include <list>
 #include <future>
 #include <fstream>
-#include "AsyncLibrarySynced.cpp"
-#include "AsyncLibraryUnSynced.cpp"
+#include "AsyncLibrarySynced.hpp"
+#include "AsyncLibraryUnSynced.hpp"
 
 /**
  * Example task 1
