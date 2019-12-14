@@ -43,18 +43,14 @@ private:
 
 
     /**
-     * Used in tandum with add_task_with_auto_execute_callback. See that functions docs for more info
+     * Used in tandum with add_task_with_auto_execute_callback. See what that functions docs for more info
      *
      * @param fptr function you wish to execute
      * @param params for fptr
      * @param cptr callback function to call on fptr completion
      */
     void execute_task_separate_thread(const Function fptr, const P... params, const Callback cptr){
-        std::future<R> future = std::async(fptr, params...);
-        future.wait();
-
-        std::thread callback_thread = std::thread(cptr, future.get());
-        callback_thread.join();
+        cptr(fptr(params...));
 
         this->number_of_detached_threads -= 1;
 
