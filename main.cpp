@@ -1,6 +1,5 @@
 #include <iostream>
 #include <thread>
-#include <list>
 #include <future>
 #include <fstream>
 #include "AsyncLibrarySynced.hpp"
@@ -85,7 +84,7 @@ int main() {
 
     std::cout << "Executing controlled output. in order of 1 2 3" << std::endl;
 
-    auto *list_of_ids = new std::list<long>();
+    auto *list_of_ids = new std::vector<long>();
 
     list_of_ids->push_back(asyncLibrarySynced->execute_single_task(task1));
     list_of_ids->push_back(asyncLibrarySynced->execute_single_task(task2));

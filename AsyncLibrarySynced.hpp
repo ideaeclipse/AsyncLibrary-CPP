@@ -142,7 +142,7 @@ public:
      * Kills all tasks and garbage collects all data from the maps
      */
     void shutdown_now(){
-        auto *list_of_ids = new std::list<long>();
+        auto *list_of_ids = new std::vector<long>();
 
         for (auto x : *this->map_of_results) {
             list_of_ids->push_back(x.first);
