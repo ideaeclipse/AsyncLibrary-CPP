@@ -99,11 +99,11 @@ public:
     R get_result_from_task(const long id){
         if (this->map_of_results->count(id) == 1) {
 
-            Future future = std::move(this->map_of_results->at(id));
+            Future *future = &this->map_of_results->at(id);
 
-            future.wait();
+            future->wait();
 
-            R result = future.get();
+            R result = future->get();
 
             this->delete_function(id);
 
@@ -122,11 +122,11 @@ public:
     void get_result_from_task_with_callback(const long id, const Callback callback){
         if (this->map_of_results->count(id) == 1) {
 
-            Future future = std::move(this->map_of_results->at(id));
+            Future *future = &this->map_of_results->at(id);
 
-            future.wait();
+            future->wait();
 
-            R result = future.get();
+            R result = future->get();
 
             this->delete_function(id);
 
@@ -147,9 +147,8 @@ public:
         for (auto x : *this->map_of_results) {
             list_of_ids->push_back(x.first);
 
-            Future shared_future = x.second;
-            shared_future.wait();
-            shared_future.get();
+            Future *future = &x.second;
+            future->get();
         }
 
         for (auto x: *list_of_ids)
