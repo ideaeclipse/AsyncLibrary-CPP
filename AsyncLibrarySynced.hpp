@@ -13,6 +13,8 @@
 #include <vector>
 #include <random>
 
+
+namespace ideaeclipse_utils{
 /**
  * This class is used to manage async tasks. That return a result.
  * See method descriptions for descriptions to use them
@@ -21,7 +23,7 @@
  * @param P variable number of parameters for task function parameters
  */
 template<typename R, typename ...P>
-class AsyncLibrarySynced {
+class synced_threapool{
 private:
 
   /**
@@ -166,6 +168,7 @@ public:
   }
 
 };
+}
 
 
 #endif //CPP_ASYNC_ASYNCLIBRARY_H

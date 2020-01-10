@@ -1,21 +1,23 @@
 #pragma clang diagnostic push
-#pragma ide diagnostic ignored "readability-avoid-const-params-in-decls"
 //
 // Created by myles on 2019-12-12.
 //
 
-#ifndef CPP_ASYNC_ASYNCLIBRARYTEST_H
-#define CPP_ASYNC_ASYNCLIBRARYTEST_H
+#ifndef CPP_ASYNC_ASYNCLIBRARYTEST_HPP 
+#define CPP_ASYNC_ASYNCLIBRARYTEST_HPP
 
 #include <utility>
 #include <future>
 #include <mutex>
 #include <condition_variable>
 
+namespace ideaeclipse_utils {
+/*
+ * TODO: Comment class
+ */
 template<typename R, typename... P>
-class AsyncLibraryUnSynced {
+class unsynced_threapool {
 private:
-
   /**
    * Declaration for lambda function parameter
    */
@@ -73,7 +75,7 @@ public:
    * @param cptr function you wish to pass the result of fptr to on completion
    */
   void add_task_with_auto_execute_callback(const Function fptr, const P... params, const Callback cptr) {
-    std::thread{&AsyncLibraryUnSynced<R, P...>::execute_task_separate_thread, this, fptr, params..., cptr}.detach();
+    std::thread{&unsynced_threapool<R, P...>::execute_task_separate_thread, this, fptr, params..., cptr}.detach();
     this->number_of_detached_threads += 1;
   }
 
@@ -93,12 +95,11 @@ public:
   /**
    * Calls wait to ensure all detached tasks are completed.
    */
-  ~AsyncLibraryUnSynced() {
+  ~unsynced_threapool() {
     this->wait();
   }
 };
+}
 
 
 #endif //CPP_ASYNC_ASYNCLIBRARYTEST_H
-
-#pragma clang diagnostic pop

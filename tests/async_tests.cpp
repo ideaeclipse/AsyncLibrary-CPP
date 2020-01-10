@@ -2,8 +2,8 @@
 #include <thread>
 #include <future>
 #include <fstream>
-#include "AsyncLibrarySynced.hpp"
-#include "AsyncLibraryUnSynced.hpp"
+#include "../AsyncLibrarySynced.hpp"
+#include "../AsyncLibraryUnSynced.hpp"
 
 /**
  * Example task 1
@@ -62,7 +62,7 @@ int task3U(int a, int b) {
 
 int main() {
 
-  auto *asyncLibrarySynced = new AsyncLibrarySynced<std::string>();
+  auto *asyncLibrarySynced = new ideaeclipse_utils::synced_threapool<std::string>();
 
   auto function = [](std::string string) {
     std::cout << string << std::endl;
@@ -72,7 +72,7 @@ int main() {
     std::cout << sum << std::endl;
   };
 
-  auto *asyncLibraryUnSynced = new AsyncLibraryUnSynced<int, int, int>();
+  auto *asyncLibraryUnSynced = new ideaeclipse_utils::unsynced_threapool<int, int, int>();
 
   asyncLibraryUnSynced->add_task_with_auto_execute_callback(task1U, 5, 6, function2);
   asyncLibraryUnSynced->add_task_with_auto_execute_callback(task2U, 4, 3, function2);
